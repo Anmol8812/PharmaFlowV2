@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Management System | Neha & Anmol</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #00b894; 
+            --light: #dfe6e9;
+            --success: #00cec9; 
+            --warning: #fdcb6e; 
+            --danger: #ff7675;
+            --bg: #f1f2f6;
+            --text: #2d3436;
+            --panel-bg: white;
+        }
+        [data-theme="dark"] {
+            --bg: #1e272e;
+            --text: #dfe6e9;
+            --panel-bg: #2f3640;
+            --light: #353b48;
+            --primary: #090b10;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: all 0.3s ease; }
+        
+        body { display: flex; height: 100vh; background-color: var(--bg); color: var(--text); }
+        .sidebar {
+            width: 260px;
+            background: var(--primary);
+            color: white;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 40px; border-bottom: 2px solid var(--accent); padding-bottom: 15px; letter-spacing: 1px;}
+        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; font-weight: 500;}
+        .menu-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .menu-item.active { background: var(--accent); color: var(--primary); font-weight: bold; box-shadow: 0 4px 10px rgba(0,184,148,0.3); }
+        .team-badge {
+            margin-top: auto;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+        }
+        .team-badge p { margin-bottom: 5px; opacity: 0.8; }
+        .team-badge strong { display: block; color: var(--accent); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .section { display: none; animation: slideUp 0.5s; }
+        .section.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+        .header h2 { font-size: 2rem; font-weight: 700; color: var(--text); }
+        .date-badge { background: var(--panel-bg); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 35px; }
+        .card { background: var(--panel-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; overflow: hidden; }
+        .card h3 { font-size: 2.5rem; margin-bottom: 5px; color: var(--text); }
+        .card p { text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; opacity: 0.7; }
+        .card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .card.approved::after { background: var(--success); }
+        .card.pending::after { background: var(--warning); }
+        .card.rejected::after { background: var(--danger); }
+        .panel { background: var(--panel-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 35px; }
+        .panel h3 { margin-bottom: 25px; font-size: 1.2rem; border-left: 4px solid var(--accent); padding-left: 10px; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 20px; align-items: end; }
+        input, select { padding: 12px; border: 2px solid var(--light); border-radius: 8px; width: 100%; background: var(--bg); color: var(--text); font-weight: 500; }
+        input:focus, select:focus { border-color: var(--accent); outline: none; }
+        
+        button { padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; letter-spacing: 0.5px; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(0,184,148,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,184,148,0.4); }
+        .btn-danger { background: var(--danger); color: white; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; margin-top: 10px; }
+        th { text-align: left; padding: 15px; color: var(--text); opacity: 0.7; font-size: 0.9rem; text-transform: uppercase; }
+        td { padding: 15px; background: var(--panel-bg); border-top: 1px solid var(--light); border-bottom: 1px solid var(--light); }
+        td:first-child { border-left: 1px solid var(--light); border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        td:last-child { border-right: 1px solid var(--light); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+        .badge { padding: 6px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; color: white; }
+        .bg-green { background: var(--success); box-shadow: 0 2px 10px rgba(0, 206, 201, 0.3); }
+        .bg-yellow { background: var(--warning); color: #2d3436; }
+        .bg-red { background: var(--danger); }
+        .bg-blue { background: #0984e3; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">💊 PharmaFlow</div>
+        <div class="menu-item active" onclick="showSection('dashboard', this)">📊 QC Dashboard</div>
+        <div class="menu-item" onclick="showSection('dispatch', this)">📨 Dispatch Log</div>
+        <div class="menu-item" onclick="showSection('reports', this)">📈 Weekly Reports</div>
+        <div class="menu-item" onclick="showSection('about', this)">👥 Project Team</div>
+        
+        <div class="team-badge">
+            <p>Developed by:</p>
+            <strong>Neha</strong>
+            <strong>Anmol Lubana</strong>
+            <p style="font-size: 0.7rem; margin-top: 5px;">4th Sem IT</p>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="dashboard" class="section active">
+            <div class="header">
+                <h2>QC Sample Monitor</h2>
+                <div class="date-badge" id="dateDisplay"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card approved"><h3 id="countApp">0</h3><p>Approved Samples</p></div>
+                <div class="card pending"><h3 id="countPen">0</h3><p>Under Testing</p></div>
+                <div class="card rejected"><h3 id="countRej">0</h3><p>Rejected Batch</p></div>
+            </div>
+
+            <div class="panel">
+                <h3>🧪 New Lab Entry</h3>
+                <div class="form-row">
+                    <input type="text" id="qcBatch" placeholder="Batch ID (e.g. B-2024-X)">
+                    <input type="text" id="qcName" placeholder="Medicine Name">
+                    <select id="qcStatus">
+                        <option value="pending">🟡 Under Test</option>
+                        <option value="approved">🟢 Approved</option>
+                        <option value="rejected">🔴 Rejected</option>
+                    </select>
+                    <button class="btn-primary" onclick="addQC()">+ Add Sample</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Recent Lab Activity</h3>
+                <table>
+                    <thead><tr><th>Batch ID</th><th>Medicine Name</th><th>QC Status</th><th>Action</th></tr></thead>
+                    <tbody id="qcTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="dispatch" class="section">
+            <div class="header"><h2>Dispatch Register (Inward/Outward)</h2></div>
+
+            <div class="panel">
+                <h3>📝 New Dispatch Entry</h3>
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr auto;">
+                    <input type="text" id="dispRef" placeholder="Ref No. (e.g. DP-05)">
+                    <input type="text" id="dispTo" placeholder="To (Receiver)">
+                    <select id="dispType">
+                        <option value="Letter">📄 Letter</option>
+                        <option value="Email">📧 Email</option>
+                        <option value="Sample">📦 Sample Box</option>
+                    </select>
+                    <input type="date" id="dispDate">
+                    <button class="btn-primary" onclick="addDispatch()">Log Entry</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Dispatch History</h3>
+                <table>
+                    <thead><tr><th>Ref No.</th><th>Receiver</th><th>Type</th><th>Date Sent</th><th>Status</th></tr></thead>
+                    <tbody id="dispatchTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="reports" class="section">
+            <div class="header"><h2>Analytical Reports</h2></div>
+            <div class="stats-grid">
+                <div class="card" style="border-top: 4px solid #6c5ce7">
+                    <h3>QC Summary</h3>
+                    <p>Generated Report</p>
+                    <button class="btn-primary" style="margin-top:15px; font-size:0.8rem;" onclick="window.print()">🖨️ Print Report</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>Visual Analytics</h3>
+                <canvas id="myChart" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+
+        <div id="about" class="section">
+            <div class="header"><h2>Project Details & Team</h2></div>
+            
+            <div class="panel">
+                <h3>👨‍💻 Project Team</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: var(--bg); padding: 20px; border-radius: 8px;">
+                        <h4 style="color: var(--accent);">Neha</h4>
+                        <p style="font-size: 0.9rem; margin-top: 5px;">Roll No: [Enter Roll No]</p>
+                        <p style="font-size: 0.9rem;">Role: Project Concept & Database</p>
+                    </div>
+                    <div style="background: var(--bg); padding: 20px; border-radius: 8px;">
+                        <h4 style="color: var(--accent);">Anmol Lubana</h4>
+                        <p style="font-size: 0.9rem; margin-top: 5px;">Roll No: [Enter Roll No]</p>
+                        <p style="font-size: 0.9rem;">Role: UI/UX Design & Coding</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>⚙️ System Preferences</h3>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <label>Interface Mode:</label>
+                    <button class="btn-primary" onclick="toggleTheme()">Toggle Dark/Light Mode</button>
+                </div>
+                <br>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <label>Database:</label>
+                    <button class="btn-danger" onclick="clearData()">Reset All Data</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        let qcData = JSON.parse(localStorage.getItem('qcData')) || [];
+        let dispData = JSON.parse(localStorage.getItem('dispData')) || [];
+        function showSection(id, element) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            if(element) {
+                document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+                element.classList.add('active');
+            }
+            if(id === 'reports') renderChart();
+        }
+        function renderQC() {
+            const tbody = document.getElementById('qcTableBody');
+            tbody.innerHTML = '';
+            let app=0, pen=0, rej=0;
+
+            qcData.forEach((item, index) => {
+                if(item.status === 'approved') app++;
+                else if(item.status === 'pending') pen++;
+                else rej++;
+
+                let badgeClass = item.status === 'approved' ? 'bg-green' : (item.status === 'pending' ? 'bg-yellow' : 'bg-red');
+                let badgeText = item.status === 'approved' ? 'Approved' : (item.status === 'pending' ? 'Under Test' : 'Rejected');
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.batch}</strong></td>
+                        <td>${item.name}</td>
+                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                        <td><button class="btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="delQC(${index})">Delete</button></td>
+                    </tr>`;
+            });
+
+            document.getElementById('countApp').innerText = app;
+            document.getElementById('countPen').innerText = pen;
+            document.getElementById('countRej').innerText = rej;
+        }
+
+        function addQC() {
+            const batch = document.getElementById('qcBatch').value;
+            const name = document.getElementById('qcName').value;
+            const status = document.getElementById('qcStatus').value;
+            
+            if(batch && name) {
+                qcData.push({ batch, name, status });
+                localStorage.setItem('qcData', JSON.stringify(qcData));
+                renderQC();
+                document.getElementById('qcBatch').value = '';
+                document.getElementById('qcName').value = '';
+            }
+        }
+        
+        function delQC(index) {
+            qcData.splice(index, 1);
+            localStorage.setItem('qcData', JSON.stringify(qcData));
+            renderQC();
+        }
+        function renderDispatch() {
+            const tbody = document.getElementById('dispatchTableBody');
+            tbody.innerHTML = '';
+            
+            dispData.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.ref}</strong></td>
+                        <td>${item.to}</td>
+                        <td>${item.type}</td>
+                        <td>${item.date}</td>
+                        <td><span class="badge bg-blue">Dispatched</span></td>
+                    </tr>`;
+            });
+        }
+
+        function addDispatch() {
+            const ref = document.getElementById('dispRef').value;
+            const to = document.getElementById('dispTo').value;
+            const type = document.getElementById('dispType').value;
+            const date = document.getElementById('dispDate').value;
+
+            if(ref && to && date) {
+                dispData.push({ ref, to, type, date });
+                localStorage.setItem('dispData', JSON.stringify(dispData));
+                renderDispatch();
+                document.getElementById('dispRef').value = '';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+
+        function clearData() {
+            if(confirm('Reset all project data?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if(window.myPieChart) window.myPieChart.destroy();
+
+            let app = qcData.filter(x => x.status === 'approved').length;
+            let pen = qcData.filter(x => x.status === 'pending').length;
+            let rej = qcData.filter(x => x.status === 'rejected').length;
+
+            window.myPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Approved', 'Under Test', 'Rejected'],
+                    datasets: [{
+                        data: [app, pen, rej],
+                        backgroundColor: ['#00cec9', '#fdcb6e', '#ff7675'],
+                        borderWidth: 0
+                    }]
+                }
+            });
+        }
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('dispDate').valueAsDate = new Date();
+        renderQC();
+        renderDispatch();
+
+    </script>
+</body>
+</html>
